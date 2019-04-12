@@ -1,0 +1,231 @@
+---
+title: "Brand Prediction"
+Author: "Gabriel Ristow Cidral"
+date: "08/04/2019"
+output:
+  rmdformats::readthedown:
+    thumbnails: true
+    lightbox: true
+    toc_depth: 3
+    gallery: true
+    highlight: tango
+---
+
+<img style="float: right;" src="https://media.timtul.com/media/network22/ubiqum.png">
+
+Example of solution
+
+## Load packages and data
+
+```{r loading data}
+pacman:: p_load(dummies, caret, party, xlsx, corrplot, ggplot2, plotly, gplots, reshape2, dplyr)
+
+complete <- read.csv("Complete_Responses_v1_inputR.csv", sep=";")
+
+incomplete <- read.csv("SurveyIncomplete v1.csv", 
+                                sep=";")
+```
+
+We see the same number of brand preference behaviour in all classes of education level, region and car
+
+```{r check distributions}
+
+
+# check sample method
+plot(complete$elevel, complete$brand)
+plot(complete$region, complete$brand)
+plot(complete$car, complete$brand)
+
+# distribution of depedent variable
+
+# change to pie chart
+f <- ggplot(as.data.frame(table(complete$brand)), aes(x = "",y = Freq, fill = Var1)) + 
+  geom_bar(width = 1, stat = "identity")
+
+f + coord_polar("y", start=0)
+
+# check distribution complete versus incomplete 
+complete$survey <- "complete"
+incomplete$survey <- "incomplete"
+
+all <- rbind(complete, incomplete)
+
+for(i in names(all[ ,!names(all) %in% c("survey","brand")])){
+x <- ggplot(data = all,aes_string(i,color="survey")) + geom_density()
+print(x)
+}
+
+```
+
+all lines are unique, though just becasue of salary and credit
+
+```{r part 2}
+
+x <- semi_join(incomplete,complete, by = c("elevel", "car", "region", "age"))
+
+x
+
+```
+
+
+```{r part 3}
+
+complete$survey <- NULL
+incomplete$survey <- NULL
+
+## Dummy variables
+
+complete_Dummy <- dummy.data.frame(complete, sep = ".", names = c("car","elevel", "region"))
+
+## Correlation 
+
+cor <- cor(complete[ , c(1,2,6)])
+cor <- round(cor,2)
+
+corrplot(cor, method = "number")
+
+# Chi analysis 
+
+chi_eleval_brand <- chisq.test(complete$elevel,complete$brand)
+chi_eleval_brand
+chi_car_brand <- chisq.test(complete$car,complete$brand)
+chi_car_brand
+chi_region_brand <- chisq.test(complete$region,complete$brand)
+chi_region_brand
+
+# decision tree
+
+decisiontree <- ctree(brand~.,data = complete, controls = ctree_control(maxdepth = 3))
+plot(decisiontree)
+
+# change brand to factor
+complete_Dummy$brand <- as.factor(complete_Dummy$brand)
+
+```
+
+Model
+
+```{r model}
+
+
+set.seed(123)
+
+inTraining <- createDataPartition(complete$brand,p=.75,list = FALSE)
+training <- complete[inTraining,]
+testing <- complete[-inTraining,]
+fitControl <- trainControl(method = "cv", number=2, verboseIter = TRUE)
+
+
+# loop for models
+
+combined <- c()
+
+a <- c("knn", "rf", "svmRadial", "svmLinear", "gbm")
+for(i in a) {
+
+
+Fit <- train(brand~yearly.salary+age,data = training,method = i, 
+                na.action = na.omit, trControl = fitControl, tuneLength = 5, 
+                preProcess = c("center", "scale"))
+
+pred <- predict(Fit,testing)
+
+res <- postResample(pred,testing$brand)
+
+combined <- cbind(combined, res) 
+
+}
+
+```
+
+```{r part 4}
+
+colnames(combined) <- a
+
+View(combined)
+
+## knn
+
+knnFit <- train(brand~yearly.salary+age,data = training,method = "knn", 
+                na.action = na.omit, trControl = fitControl, tuneLength = 20, 
+                preProcess = c("center", "scale"))
+plot(knnFit)
+predictbrand_knn <- predict(knnFit,testing)
+postResample(predictbrand_knn,testing$brand)
+confusionMatrix(testing$brand,predictbrand_knn)
+
+
+## Random Forest
+
+RandomForestbrand <- train(brand~.,data = training,method = "rf",
+                           na.action = na.omit, trControl = fitControl, tuneLength = 1,
+                           preProcess = c("center", "scale"))
+
+varImp(RandomForestbrand)
+
+predictbrand_Randomforest <- predict(RandomForestbrand,testing)
+postResample(predictbrand_Randomforest,testing$brand)
+confusionMatrix(testing$brand,predictbrand_Randomforest)
+
+## Applying prediction
+
+incomplete$brand <- predict(knnFit,incomplete)
+
+# Visual results
+
+f <- ggplot(incomplete, aes(age, yearly.salary))
+
+f + geom_point(aes(colour = factor(brand)))
+
+```
+
+```{r viz}
+
+all <- rbind(complete, incomplete)
+
+by_group <- all %>% group_by(elevel, car) %>% dplyr::summarise(brand = sum(brand == "Acer"))
+
+by_group1 <- by_group 
+
+by_group <- reshape2::dcast(data = by_group, formula = car~elevel)
+
+# need data as matrix
+
+mm <- as.matrix(by_group)
+
+
+
+mm <- mm[,2:6]
+
+
+mm <- mapply(mm, FUN=as.numeric)
+
+mm <- matrix(data=mm, ncol=5, nrow=20)
+
+rownames(mm) <- by_group$car
+colnames(mm) <- names(by_group[2:6])
+
+heatmap.2(x = mm, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
+          cellnote = mm, notecol = "black", notecex = 2,
+          trace = "none", key = FALSE, margins = c(7, 11))
+
+
+
+## Export prediction
+
+write.xlsx(incomplete, file = "incompleteprediction.xlsx")
+
+View(incomplete)
+
+
+#aplot <- as.data.frame(table(incomplete$prediction,incomplete$car, incomplete$elevel))
+
+#g <- ggplot(aplot, aes(x = "",y = Freq, fill = Var1)) + 
+  #geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + facet_grid(.~Var2)
+
+#g 
+
+
+```
+
+
