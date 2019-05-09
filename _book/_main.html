@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html >
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Brand Prediction</title>
+  <meta name="description" content="Brand Prediction">
+  <meta name="generator" content="bookdown  and GitBook 2.6.7">
+
+  <meta property="og:title" content="Brand Prediction" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Brand Prediction" />
+  
+  
+  
+
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  
+  
+
+
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="0.1" data-path=""><a href="#section-load-packages-and-data"><i class="fa fa-check"></i><b>0.1</b> Load packages and data</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Brand Prediction</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="section-header">
+<h1 class="title">Brand Prediction</h1>
+</div>
+<p># rmdformats::readthedown: # thumbnails: true # lightbox: true # toc_depth: 3 # gallery: true # highlight: tango</p>
+<p><img style="float: right;" src="https://media.timtul.com/media/network22/ubiqum.png"></p>
+<p>Example of solution</p>
+<div id="section-load-packages-and-data" class="section level2">
+<h2><span class="header-section-number">0.1</span> Load packages and data</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pacman<span class="op">::</span><span class="st"> </span><span class="kw">p_load</span>(dummies, caret, party, xlsx, corrplot, ggplot2, plotly, gplots, reshape2, dplyr, readr)
+
+complete &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;Complete_Responses_v1_inputR.csv&quot;</span>, <span class="dt">sep=</span><span class="st">&quot;;&quot;</span>)
+
+incomplete &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;SurveyIncomplete v1.csv&quot;</span>, 
+                                <span class="dt">sep=</span><span class="st">&quot;;&quot;</span>)
+
+caret<span class="op">::</span><span class="st"> </span><span class="kw">modelLookup</span>(<span class="st">&quot;svmLinear&quot;</span>)</code></pre></div>
+<pre><code>##       model parameter label forReg forClass probModel
+## 1 svmLinear         C  Cost   TRUE     TRUE      TRUE</code></pre>
+<p>We see the samebrand preference behaviour in all classes of education level, region and car</p>
+<!-- ```{r check distributions} -->
+<!-- # check sample method -->
+<!-- plot(complete$elevel, complete$brand) -->
+<!-- plot(complete$region, complete$brand) -->
+<!-- plot(complete$car, complete$brand) -->
+<!-- # distribution of depedent variable -->
+<!-- # change to pie chart -->
+<!-- f <- ggplot(as.data.frame(table(complete$brand)), aes(x = "",y = Freq, fill = Var1)) +  -->
+<!--   geom_bar(width = 1, stat = "identity") -->
+<!-- f + coord_polar("y", start=0) -->
+<!-- # check distribution complete versus incomplete  -->
+<!-- complete$survey <- "complete" -->
+<!-- incomplete$survey <- "incomplete" -->
+<!-- all <- rbind(complete, incomplete) -->
+<!-- for(i in names(all[ ,!names(all) %in% c("survey","brand")])){ -->
+<!-- x <- ggplot(data = all,aes_string(i,color="survey")) + geom_density() -->
+<!-- print(x) -->
+<!-- } -->
+<!-- ``` -->
+<!-- all lines are unique, though just becasue of salary and credit -->
+<!-- ```{r part 2} -->
+<!-- x <- semi_join(incomplete,complete, by = c("elevel", "car", "region", "age","yearly.salary", "credit")) -->
+<!-- x -->
+<!-- ``` -->
+<!-- ```{r part 3} -->
+<!-- complete$survey <- NULL -->
+<!-- incomplete$survey <- NULL -->
+<!-- # Chi analysis  -->
+<!-- chi_eleval_brand <- chisq.test(complete$elevel,complete$brand) -->
+<!-- chi_eleval_brand -->
+<!-- chi_car_brand <- chisq.test(complete$car,complete$brand) -->
+<!-- chi_car_brand -->
+<!-- chi_region_brand <- chisq.test(complete$region,complete$brand) -->
+<!-- chi_region_brand -->
+<!-- # decision tree -->
+<!-- decisiontree <- ctree(brand~.,data = complete, controls = ctree_control(maxdepth = 3)) -->
+<!-- plot(decisiontree) -->
+<!-- ``` -->
+<!-- ## Model -->
+<!-- ```{r model, echo = FALSE } -->
+<!-- set.seed(123) -->
+<!-- inTraining <- createDataPartition(complete$brand,p=.75,list = FALSE) -->
+<!-- training <- complete[inTraining,] -->
+<!-- testing <- complete[-inTraining,] -->
+<!-- fitControl <- trainControl(method = "cv", number=2, verboseIter = TRUE) -->
+<!-- # loop for models -->
+<!-- combined <- c() -->
+<!-- a <- c("knn", "rf", "svmRadial", "svmLinear", "gbm") -->
+<!-- for(i in a) { -->
+<!-- Fit <- train(brand~yearly.salary+age,data = training,method = i,  -->
+<!--                 na.action = na.omit, trControl = fitControl, tuneLength = 5,  -->
+<!--                 preProcess = c("center", "scale")) -->
+<!-- pred <- predict(Fit,testing) -->
+<!-- res <- postResample(pred,testing$brand) -->
+<!-- combined <- cbind(combined, res)  -->
+<!-- } -->
+<!-- colnames(combined) <- a -->
+<!-- combined -->
+<!-- ``` -->
+<!-- ```{r part 4} -->
+<!-- ## gbm -->
+<!-- gbmFit <- train(brand~yearly.salary+age, data = training, method = "gbm",  -->
+<!--                 na.action = na.omit, trControl = fitControl, tuneLength = 20,  -->
+<!--                 preProcess = c("center", "scale")) -->
+<!-- predictbrand_gbm <- predict(gbmFit,testing) -->
+<!-- postResample(predictbrand_gbm,testing$brand) -->
+<!-- confusionMatrix(testing$brand,predictbrand_gbm) -->
+<!-- ## Applying prediction -->
+<!-- incomplete$brand <- predict(gbmFit,incomplete) -->
+<!-- # Visual results -->
+<!-- f <- ggplot(incomplete, aes(age, yearly.salary)) -->
+<!-- f + geom_point(aes(colour = factor(brand))) -->
+<!-- ``` -->
+<!-- ```{r viz} -->
+<!-- all <- rbind(complete, incomplete) -->
+<!-- by_group <- all %>% group_by(elevel, car) %>% dplyr::summarise(brand = sum(brand == "Acer")) -->
+<!-- by_group1 <- by_group  -->
+<!-- by_group <- reshape2::dcast(data = by_group, formula = car~elevel) -->
+<!-- # need data as matrix -->
+<!-- mm <- as.matrix(by_group) -->
+<!-- mm <- mm[,2:6] -->
+<!-- mm <- mapply(mm, FUN=as.numeric) -->
+<!-- mm <- matrix(data=mm, ncol=5, nrow=20) -->
+<!-- rownames(mm) <- by_group$car -->
+<!-- colnames(mm) <- names(by_group[2:6]) -->
+<!-- heatmap.2(x = mm, Rowv = FALSE, Colv = FALSE, dendrogram = "none", -->
+<!--           cellnote = mm, notecol = "black", notecex = 2, -->
+<!--           trace = "none", key = FALSE, margins = c(7, 11)) -->
+<!-- ### Key States -->
+<!-- key_states <- read_delim("key_states.csv", ";", escape_double = FALSE, col_types = cols(X3 = col_skip(), X4 = col_skip()), trim_ws = TRUE) -->
+<!-- all$region <- as.character(all$region) -->
+<!-- all_regions <- left_join(all, key_states, by = "region") -->
+<!-- ## Export prediction -->
+<!-- write.csv(all_regions, file = "all_regions.csv") -->
+<!-- #aplot <- as.data.frame(table(incomplete$prediction,incomplete$car, incomplete$elevel)) -->
+<!-- #g <- ggplot(aplot, aes(x = "",y = Freq, fill = Var1)) +  -->
+<!--   #geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + facet_grid(.~Var2) -->
+<!-- #g  -->
+<!-- ``` -->
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"google": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>

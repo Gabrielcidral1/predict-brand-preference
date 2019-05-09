@@ -1,0 +1,3 @@
+[
+["_main.html", "Brand Prediction 0.1 Load packages and data", " Brand Prediction # rmdformats::readthedown: # thumbnails: true # lightbox: true # toc_depth: 3 # gallery: true # highlight: tango Example of solution 0.1 Load packages and data pacman:: p_load(dummies, caret, party, xlsx, corrplot, ggplot2, plotly, gplots, reshape2, dplyr, readr) complete &lt;- read.csv(&quot;Complete_Responses_v1_inputR.csv&quot;, sep=&quot;;&quot;) incomplete &lt;- read.csv(&quot;SurveyIncomplete v1.csv&quot;, sep=&quot;;&quot;) caret:: modelLookup(&quot;svmLinear&quot;) ## model parameter label forReg forClass probModel ## 1 svmLinear C Cost TRUE TRUE TRUE We see the samebrand preference behaviour in all classes of education level, region and car "]
+]
