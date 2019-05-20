@@ -15,6 +15,20 @@ output:
 
 Example of solution
 
+## Background
+We have been asked by Danielle Sherman, CTO of Blackwell Electronics, to predict the customers brand preferences that are missing from the incomplete surveys. In the following report, you will find a long analysis of both samples to see if they are useful for our purpose of predicting the customer brands preferences and find the differences between both of them, as well as a prediction for brand preferences in the incomplete survey.
+
+## Executive Summary
+
+###Highlights:
+
+* There are several indicators that strongly suggest the data was sampled by a clustered method, in each a stratification was created by education level, region and car. This type of sample is recommended for targeted marketing campaigns, but we cannot calculate total proportion of all Blackwell customers that prefer Sony/Acer.   
+
+* Also, there is sign that data may have been fabricated, it has very questionable quality. For example, customers reported their salaries and credit with precision that doesnt make sense in the real world. For example a reported salary of $113,236.3836. No human would report their salary with 4 decimal places. An exchange rate conversion could add the decimal places, but even so, humans tend to
+report their salary or credit level in round whole numbers: $110,000, $75,000, perhaps $42,000, but
+not very often as precisely as $42,235.
+
+
 ## Load packages and data
 
 ```{r loading data}
@@ -27,6 +41,8 @@ incomplete <- read.csv("SurveyIncomplete v1.csv",
 ```
 
 We see the same number of brand preference behaviour in all classes of education level, region and car
+
+## Initial exploration
 
 ```{r check distributions}
 
@@ -57,13 +73,14 @@ print(x)
 
 ```
 
-all lines are unique, though just becasue of salary and credit
+all lines are unique (semi join is a good technique to check that)
 
 ```{r part 2}
 
-x <- semi_join(incomplete,complete, by = c("elevel", "car", "region", "age"))
+x <- semi_join(incomplete,complete, by = c("elevel", "car", "region", "age", "yearly.salary", "credit"))
 
-x
+nrow(x)
+
 
 ```
 
@@ -72,17 +89,6 @@ x
 
 complete$survey <- NULL
 incomplete$survey <- NULL
-
-## Dummy variables
-
-complete_Dummy <- dummy.data.frame(complete, sep = ".", names = c("car","elevel", "region"))
-
-## Correlation 
-
-cor <- cor(complete[ , c(1,2,6)])
-cor <- round(cor,2)
-
-corrplot(cor, method = "number")
 
 # Chi analysis 
 
@@ -98,22 +104,20 @@ chi_region_brand
 decisiontree <- ctree(brand~.,data = complete, controls = ctree_control(maxdepth = 3))
 plot(decisiontree)
 
-# change brand to factor
-complete_Dummy$brand <- as.factor(complete_Dummy$brand)
 
 ```
 
-Model
 
-```{r model}
+## Modeling
 
+```{r model, eval=T, collapse= T, results= 'hide', message=FALSE}
 
 set.seed(123)
 
 inTraining <- createDataPartition(complete$brand,p=.75,list = FALSE)
 training <- complete[inTraining,]
 testing <- complete[-inTraining,]
-fitControl <- trainControl(method = "cv", number=2, verboseIter = TRUE)
+fitControl <- trainControl(method = "cv", number=2, verboseIter = F)
 
 
 # loop for models
@@ -122,7 +126,6 @@ combined <- c()
 
 a <- c("knn", "rf", "svmRadial", "svmLinear", "gbm")
 for(i in a) {
-
 
 Fit <- train(brand~yearly.salary+age,data = training,method = i, 
                 na.action = na.omit, trControl = fitControl, tuneLength = 5, 
@@ -136,40 +139,34 @@ combined <- cbind(combined, res)
 
 }
 
+
 ```
 
-```{r part 4}
+```{r}
 
 colnames(combined) <- a
 
-View(combined)
+combined
 
-## knn
 
-knnFit <- train(brand~yearly.salary+age,data = training,method = "knn", 
+```
+
+
+```{r part 4,  eval=T, echo=T, collapse= T, results= 'hide'} 
+
+## gbm
+
+gbmFit <- train(brand~yearly.salary+age,data = training,method = "gbm", 
                 na.action = na.omit, trControl = fitControl, tuneLength = 20, 
                 preProcess = c("center", "scale"))
-plot(knnFit)
-predictbrand_knn <- predict(knnFit,testing)
-postResample(predictbrand_knn,testing$brand)
-confusionMatrix(testing$brand,predictbrand_knn)
 
-
-## Random Forest
-
-RandomForestbrand <- train(brand~.,data = training,method = "rf",
-                           na.action = na.omit, trControl = fitControl, tuneLength = 1,
-                           preProcess = c("center", "scale"))
-
-varImp(RandomForestbrand)
-
-predictbrand_Randomforest <- predict(RandomForestbrand,testing)
-postResample(predictbrand_Randomforest,testing$brand)
-confusionMatrix(testing$brand,predictbrand_Randomforest)
+predictbrand_gbm <- predict(gbmFit,testing)
+postResample(predictbrand_gbm,testing$brand)
+confusionMatrix(testing$brand,predictbrand_gbm)
 
 ## Applying prediction
 
-incomplete$brand <- predict(knnFit,incomplete)
+incomplete$brand <- predict(gbmFit,incomplete)
 
 # Visual results
 
@@ -177,57 +174,16 @@ f <- ggplot(incomplete, aes(age, yearly.salary))
 
 f + geom_point(aes(colour = factor(brand)))
 
-```
-
-```{r viz}
-
 all <- rbind(complete, incomplete)
-
-by_group <- all %>% group_by(elevel, car) %>% dplyr::summarise(brand = sum(brand == "Acer"))
-
-by_group1 <- by_group 
-
-by_group <- reshape2::dcast(data = by_group, formula = car~elevel)
-
-# need data as matrix
-
-mm <- as.matrix(by_group)
-
-
-
-mm <- mm[,2:6]
-
-
-mm <- mapply(mm, FUN=as.numeric)
-
-mm <- matrix(data=mm, ncol=5, nrow=20)
-
-rownames(mm) <- by_group$car
-colnames(mm) <- names(by_group[2:6])
-
-heatmap.2(x = mm, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-          cellnote = mm, notecol = "black", notecex = 2,
-          trace = "none", key = FALSE, margins = c(7, 11))
-
-
 
 ## Export prediction
 
 write.xlsx(incomplete, file = "incompleteprediction.xlsx")
 
-View(incomplete)
-
-
-#aplot <- as.data.frame(table(incomplete$prediction,incomplete$car, incomplete$elevel))
-
-#g <- ggplot(aplot, aes(x = "",y = Freq, fill = Var1)) + 
-  #geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + facet_grid(.~Var2)
-
-#g 
-
-
+write.csv(all, file = "all_regions.csv")
 
 ```
 
-<iframe width="800" height="600" src="https://app.powerbi.com/view?r=eyJrIjoiMDQ4MjZiZWYtNDdhZC00ODJhLWIwNGMtYTNhZDBlZjA1NGE3IiwidCI6IjcyZDYyNGY1LTQwZWUtNDMzMS1iNDRmLWYyNjhjYzJjMGY2OCIsImMiOjl9" frameborder="0" allowFullScreen="true"></iframe>
+## Analysing results
 
+<iframe width="800" height="600" src="https://app.powerbi.com/view?r=eyJrIjoiMDQ4MjZiZWYtNDdhZC00ODJhLWIwNGMtYTNhZDBlZjA1NGE3IiwidCI6IjcyZDYyNGY1LTQwZWUtNDMzMS1iNDRmLWYyNjhjYzJjMGY2OCIsImMiOjl9" frameborder="0" allowFullScreen="true"></iframe>&refresh=5
